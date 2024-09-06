@@ -1,0 +1,100 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+import json
+import os
+
+# File to store contacts
+CONTACTS_FILE = 'contacts.json'
+
+# Load contacts from file
+def load_contacts():
+    if os.path.exists(CONTACTS_FILE):
+        with open(CONTACTS_FILE, 'r') as file:
+            return json.load(file)
+    return {}
+
+# Save contacts to file
+def save_contacts(contacts):
+    with open(CONTACTS_FILE, 'w') as file:
+        json.dump(contacts, file, indent=4)
+
+# Add a new contact
+def add_contact():
+    name = simpledialog.askstring("Add Contact", "Enter contact name:")
+    if not name:
+        return
+    phone = simpledialog.askstring("Add Contact", "Enter phone number:")
+    email = simpledialog.askstring("Add Contact", "Enter email:")
+    
+    contacts[name] = {'phone': phone, 'email': email}
+    save_contacts(contacts)
+    refresh_contact_list()
+    messagebox.showinfo("Success", f"Contact {name} added!")
+
+# View all contacts
+def view_contact(name):
+    contact = contacts.get(name)
+    if contact:
+        messagebox.showinfo("Contact Info", f"Name: {name}\nPhone: {contact['phone']}\nEmail: {contact['email']}")
+
+# Edit an existing contact
+def edit_contact():
+    name = contact_listbox.get(tk.ACTIVE)
+    if not name:
+        messagebox.showwarning("Warning", "Select a contact to edit.")
+        return
+
+    phone = simpledialog.askstring("Edit Contact", "Enter new phone number:", initialvalue=contacts[name]['phone'])
+    email = simpledialog.askstring("Edit Contact", "Enter new email:", initialvalue=contacts[name]['email'])
+
+    contacts[name]['phone'] = phone
+    contacts[name]['email'] = email
+    save_contacts(contacts)
+    refresh_contact_list()
+    messagebox.showinfo("Success", f"Contact {name} updated!")
+
+# Delete a contact
+def delete_contact():
+    name = contact_listbox.get(tk.ACTIVE)
+    if not name:
+        messagebox.showwarning("Warning", "Select a contact to delete.")
+        return
+
+    if messagebox.askyesno("Delete Contact", f"Are you sure you want to delete {name}?"):
+        del contacts[name]
+        save_contacts(contacts)
+        refresh_contact_list()
+        messagebox.showinfo("Deleted", f"Contact {name} deleted.")
+
+# Refresh the contact list displayed in the Listbox
+def refresh_contact_list():
+    contact_listbox.delete(0, tk.END)
+    for name in contacts:
+        contact_listbox.insert(tk.END, name)
+
+# Main Application GUI
+root = tk.Tk()
+root.title("Contact Manager")
+
+# Contacts listbox
+contact_listbox = tk.Listbox(root, height=10, width=50)
+contact_listbox.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+
+# Buttons
+btn_add = tk.Button(root, text="Add Contact", width=20, command=add_contact)
+btn_add.grid(row=1, column=0, padx=10, pady=5)
+
+btn_view = tk.Button(root, text="View Contact", width=20, command=lambda: view_contact(contact_listbox.get(tk.ACTIVE)))
+btn_view.grid(row=1, column=1, padx=10, pady=5)
+
+btn_edit = tk.Button(root, text="Edit Contact", width=20, command=edit_contact)
+btn_edit.grid(row=2, column=0, padx=10, pady=5)
+
+btn_delete = tk.Button(root, text="Delete Contact", width=20, command=delete_contact)
+btn_delete.grid(row=2, column=1, padx=10, pady=5)
+
+# Load contacts from file and populate the listbox
+contacts = load_contacts()
+refresh_contact_list()
+
+root.mainloop()
